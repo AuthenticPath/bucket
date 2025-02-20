@@ -154,14 +154,14 @@
       <canvas id="portfolioChart" width="300" height="300"></canvas>
     </div>
     <div class="bucket-info">
-      <div class="bucket cash" title="This bucket holds two years’ worth of withdrawals to cover near-term expenses.">
-        <p id="cashValue"></p>
+      <div class="bucket stocks" title="This bucket is allocated to stocks for growth and potential inflation protection.">
+        <p id="stockValue"></p>
       </div>
       <div class="bucket bonds" title="This bucket is allocated to bonds for stability and income.">
         <p id="bondValue"></p>
       </div>
-      <div class="bucket stocks" title="This bucket is allocated to stocks for growth and potential inflation protection.">
-        <p id="stockValue"></p>
+      <div class="bucket cash" title="This bucket holds two years’ worth of withdrawals to cover near-term expenses.">
+        <p id="cashValue"></p>
       </div>
     </div>
 
@@ -170,16 +170,16 @@
       <h2>Estimated Average Return</h2>
       <form id="returnForm">
         <div class="form-group">
-          <label for="cashReturn">Cash Return %:</label>
-          <input type="number" id="cashReturn" value="1" step="0.1" required />
-        </div>
-        <div class="form-group">
           <label for="stockReturn">Stock Return %:</label>
           <input type="number" id="stockReturn" value="7" step="0.1" required />
         </div>
         <div class="form-group">
           <label for="bondReturn">Bond Return %:</label>
           <input type="number" id="bondReturn" value="3" step="0.1" required />
+        </div>
+        <div class="form-group">
+          <label for="cashReturn">Cash Return %:</label>
+          <input type="number" id="cashReturn" value="1" step="0.1" required />
         </div>
       </form>
       <div class="return-display">
