@@ -73,20 +73,29 @@
     }
     .bucket {
       flex: 1 1 200px;
-      background: #f1f1f1;
       margin: 10px;
       padding: 15px;
       border-radius: 8px;
       text-align: center;
       position: relative;
     }
-    .bucket h3 {
-      margin-top: 0;
-      color: #444;
-    }
     .bucket p {
       font-size: 16px;
-      margin: 10px 0 0;
+      margin: 0;
+      line-height: 1.5;
+    }
+    /* Bucket background colors to match the pie chart */
+    .bucket.cash {
+      background: #4CAF50;
+      color: #fff;
+    }
+    .bucket.bonds {
+      background: #FFC107;
+      color: #000;
+    }
+    .bucket.stocks {
+      background: #2196F3;
+      color: #fff;
     }
     @media (max-width: 600px) {
       form {
@@ -128,17 +137,14 @@
       <canvas id="portfolioChart" width="300" height="300"></canvas>
     </div>
     <div class="bucket-info">
-      <div class="bucket" title="This bucket holds two years’ worth of withdrawals to cover near-term expenses.">
-        <h3>Cash</h3>
-        <p id="cashValue">$0</p>
+      <div class="bucket cash" title="This bucket holds two years’ worth of withdrawals to cover near-term expenses.">
+        <p id="cashValue"></p>
       </div>
-      <div class="bucket" title="This bucket is allocated to bonds for stability and income.">
-        <h3>Bonds</h3>
-        <p id="bondValue">$0</p>
+      <div class="bucket bonds" title="This bucket is allocated to bonds for stability and income.">
+        <p id="bondValue"></p>
       </div>
-      <div class="bucket" title="This bucket is allocated to stocks for growth and potential inflation protection.">
-        <h3>Stocks</h3>
-        <p id="stockValue">$0</p>
+      <div class="bucket stocks" title="This bucket is allocated to stocks for growth and potential inflation protection.">
+        <p id="stockValue"></p>
       </div>
     </div>
   </div>
@@ -156,16 +162,21 @@
     const canvas = document.getElementById('portfolioChart');
     const ctx = canvas.getContext('2d');
 
-    // Colors for buckets
+    // Colors for buckets (also used for chart)
     const colors = {
       cash: '#4CAF50',
       bonds: '#FFC107',
       stocks: '#2196F3'
     };
 
-    // Format currency helper
+    // Format currency helper (with cents, used elsewhere if needed)
     function formatCurrency(num) {
       return '$' + num.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    }
+
+    // Format currency with no cents for bucket display
+    function formatCurrencyNoCents(num) {
+      return '$' + num.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0});
     }
 
     // Update calculations and chart
@@ -174,7 +185,6 @@
       const totalPortfolio = parseFloat(totalValueEl.value) || 0;
       const withdrawals = parseFloat(withdrawalsEl.value) || 0;
       let stockAllocation = parseFloat(stockAllocationEl.value) || 0;
-      // Ensure allocation is between 0 and 100
       stockAllocation = Math.min(Math.max(stockAllocation, 0), 100);
       const bondAllocation = 100 - stockAllocation;
 
@@ -184,7 +194,7 @@
       // Basic error checking: withdrawals should not exceed total portfolio
       if (withdrawals > totalPortfolio) {
         errorMessageEl.textContent = "Error: Expected withdrawals exceed total portfolio value.";
-        cashValueEl.textContent = bondValueEl.textContent = stockValueEl.textContent = "$0";
+        cashValueEl.innerHTML = bondValueEl.innerHTML = stockValueEl.innerHTML = "<strong>N/A</strong>";
         drawChart(0, 0, 0, totalPortfolio);
         return;
       } else {
@@ -197,10 +207,15 @@
       const bondBucket = remaining * (bondAllocation / 100);
       const stockBucket = remaining * (stockAllocation / 100);
 
-      // Update bucket display text
-      cashValueEl.textContent = formatCurrency(cashBucket);
-      bondValueEl.textContent = formatCurrency(bondBucket);
-      stockValueEl.textContent = formatCurrency(stockBucket);
+      // Calculate percentages (avoid division by zero)
+      const cashPercent = totalPortfolio > 0 ? Math.round((cashBucket / totalPortfolio) * 100) : 0;
+      const bondPercent = totalPortfolio > 0 ? Math.round((bondBucket / totalPortfolio) * 100) : 0;
+      const stockPercent = totalPortfolio > 0 ? Math.round((stockBucket / totalPortfolio) * 100) : 0;
+
+      // Update bucket display text with name, dollar amount (no cents), and percentage
+      cashValueEl.innerHTML = `<strong>Cash</strong><br>${formatCurrencyNoCents(cashBucket)}<br>${cashPercent}%`;
+      bondValueEl.innerHTML = `<strong>Bonds</strong><br>${formatCurrencyNoCents(bondBucket)}<br>${bondPercent}%`;
+      stockValueEl.innerHTML = `<strong>Stocks</strong><br>${formatCurrencyNoCents(stockBucket)}<br>${stockPercent}%`;
 
       // Draw chart
       drawChart(cashBucket, bondBucket, stockBucket, totalPortfolio);
@@ -210,11 +225,8 @@
     function drawChart(cash, bonds, stocks, total) {
       // Clear canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // If total is 0, nothing to draw
       if (total === 0) return;
 
-      // Calculate angles
       let startAngle = 0;
       const slices = [
         { value: cash, color: colors.cash },
@@ -234,7 +246,7 @@
       });
     }
 
-    // Listen for changes on inputs
+    // Listen for input changes
     [totalValueEl, withdrawalsEl, stockAllocationEl].forEach(el => {
       el.addEventListener('input', updateVisualization);
     });
