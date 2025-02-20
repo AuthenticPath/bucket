@@ -23,7 +23,7 @@
       border-radius: 8px;
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     }
-    h1 {
+    h1, h2 {
       text-align: center;
       margin-bottom: 20px;
     }
@@ -84,7 +84,7 @@
       margin: 0;
       line-height: 1.5;
     }
-    /* Bucket background colors to match the pie chart */
+    /* Bucket background colors matching the pie chart */
     .bucket.cash {
       background: #4CAF50;
       color: #fff;
@@ -96,6 +96,23 @@
     .bucket.stocks {
       background: #2196F3;
       color: #fff;
+    }
+    .estimated-return {
+      margin-top: 30px;
+      padding: 15px;
+      border-top: 1px solid #ccc;
+    }
+    .estimated-return form {
+      justify-content: center;
+    }
+    .estimated-return .form-group {
+      margin: 10px;
+      flex: 1 1 200px;
+    }
+    .estimated-return div.return-display {
+      text-align: center;
+      font-size: 18px;
+      margin-top: 10px;
     }
     @media (max-width: 600px) {
       form {
@@ -147,10 +164,32 @@
         <p id="stockValue"></p>
       </div>
     </div>
+
+    <!-- Estimated Average Return Section -->
+    <div class="estimated-return">
+      <h2>Estimated Average Return</h2>
+      <form id="returnForm">
+        <div class="form-group">
+          <label for="cashReturn">Cash Return %:</label>
+          <input type="number" id="cashReturn" value="1" step="0.1" required />
+        </div>
+        <div class="form-group">
+          <label for="stockReturn">Stock Return %:</label>
+          <input type="number" id="stockReturn" value="7" step="0.1" required />
+        </div>
+        <div class="form-group">
+          <label for="bondReturn">Bond Return %:</label>
+          <input type="number" id="bondReturn" value="3" step="0.1" required />
+        </div>
+      </form>
+      <div class="return-display">
+        Combined Average Return: <span id="averageReturn"><b>0%</b></span>
+      </div>
+    </div>
   </div>
 
   <script>
-    // Retrieve elements
+    // Retrieve portfolio elements
     const totalValueEl = document.getElementById('totalValue');
     const withdrawalsEl = document.getElementById('withdrawals');
     const stockAllocationEl = document.getElementById('stockAllocation');
@@ -162,40 +201,48 @@
     const canvas = document.getElementById('portfolioChart');
     const ctx = canvas.getContext('2d');
 
-    // Colors for buckets (also used for chart)
+    // Retrieve estimated return elements
+    const cashReturnEl = document.getElementById('cashReturn');
+    const stockReturnEl = document.getElementById('stockReturn');
+    const bondReturnEl = document.getElementById('bondReturn');
+    const averageReturnEl = document.getElementById('averageReturn');
+
+    // Colors for buckets (and chart)
     const colors = {
       cash: '#4CAF50',
       bonds: '#FFC107',
       stocks: '#2196F3'
     };
 
-    // Format currency helper (with cents, used elsewhere if needed)
+    // Global variables for current bucket amounts
+    let currentCashBucket = 0, currentBondBucket = 0, currentStockBucket = 0, currentTotalPortfolio = 0;
+
+    // Format currency helpers
     function formatCurrency(num) {
       return '$' + num.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
     }
-
-    // Format currency with no cents for bucket display
     function formatCurrencyNoCents(num) {
       return '$' + num.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0});
     }
 
-    // Update calculations and chart
+    // Update visualization and bucket calculations
     function updateVisualization() {
-      // Get input values
+      // Retrieve input values
       const totalPortfolio = parseFloat(totalValueEl.value) || 0;
       const withdrawals = parseFloat(withdrawalsEl.value) || 0;
       let stockAllocation = parseFloat(stockAllocationEl.value) || 0;
       stockAllocation = Math.min(Math.max(stockAllocation, 0), 100);
       const bondAllocation = 100 - stockAllocation;
 
-      // Update bond allocation display
       bondAllocationDisplayEl.textContent = `Bond Allocation: ${bondAllocation}%`;
 
-      // Basic error checking: withdrawals should not exceed total portfolio
+      // Error handling: withdrawals should not exceed portfolio value
       if (withdrawals > totalPortfolio) {
         errorMessageEl.textContent = "Error: Expected withdrawals exceed total portfolio value.";
         cashValueEl.innerHTML = bondValueEl.innerHTML = stockValueEl.innerHTML = "<strong>N/A</strong>";
         drawChart(0, 0, 0, totalPortfolio);
+        currentCashBucket = currentBondBucket = currentStockBucket = currentTotalPortfolio = 0;
+        updateEstimatedReturn();
         return;
       } else {
         errorMessageEl.textContent = "";
@@ -207,23 +254,31 @@
       const bondBucket = remaining * (bondAllocation / 100);
       const stockBucket = remaining * (stockAllocation / 100);
 
-      // Calculate percentages (avoid division by zero)
+      // Update current global bucket values
+      currentCashBucket = cashBucket;
+      currentBondBucket = bondBucket;
+      currentStockBucket = stockBucket;
+      currentTotalPortfolio = totalPortfolio;
+
+      // Calculate percentages
       const cashPercent = totalPortfolio > 0 ? Math.round((cashBucket / totalPortfolio) * 100) : 0;
       const bondPercent = totalPortfolio > 0 ? Math.round((bondBucket / totalPortfolio) * 100) : 0;
       const stockPercent = totalPortfolio > 0 ? Math.round((stockBucket / totalPortfolio) * 100) : 0;
 
-      // Update bucket display text with name, dollar amount (no cents), and percentage
-      cashValueEl.innerHTML = `<strong>Cash</strong><br>${formatCurrencyNoCents(cashBucket)}<br><strong>${cashPercent}%</strong>`;
-      bondValueEl.innerHTML = `<strong>Bonds</strong><br>${formatCurrencyNoCents(bondBucket)}<br><strong>${bondPercent}%</strong>`;
-      stockValueEl.innerHTML = `<strong>Stocks</strong><br>${formatCurrencyNoCents(stockBucket)}<br><strong>${stockPercent}%</strong>`;
+      // Update bucket displays (name, amount without cents, and percentage)
+      cashValueEl.innerHTML = `<strong>Cash</strong><br>${formatCurrencyNoCents(cashBucket)}<br>${cashPercent}%`;
+      bondValueEl.innerHTML = `<strong>Bonds</strong><br>${formatCurrencyNoCents(bondBucket)}<br>${bondPercent}%`;
+      stockValueEl.innerHTML = `<strong>Stocks</strong><br>${formatCurrencyNoCents(stockBucket)}<br>${stockPercent}%`;
 
-      // Draw chart
+      // Draw the updated pie chart
       drawChart(cashBucket, bondBucket, stockBucket, totalPortfolio);
+
+      // Update the estimated average return
+      updateEstimatedReturn();
     }
 
     // Draw pie chart on canvas
     function drawChart(cash, bonds, stocks, total) {
-      // Clear canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       if (total === 0) return;
 
@@ -246,9 +301,30 @@
       });
     }
 
-    // Listen for input changes
+    // Update estimated average return based on bucket values and user return inputs
+    function updateEstimatedReturn() {
+      if (currentTotalPortfolio === 0) {
+        averageReturnEl.innerHTML = `<b>0%</b>`;
+        return;
+      }
+      const cashReturn = parseFloat(cashReturnEl.value) || 0;
+      const stockReturn = parseFloat(stockReturnEl.value) || 0;
+      const bondReturn = parseFloat(bondReturnEl.value) || 0;
+      // Weighted average return calculation based on bucket proportions
+      const weightedReturn = ((currentCashBucket / currentTotalPortfolio) * cashReturn) +
+                             ((currentBondBucket / currentTotalPortfolio) * bondReturn) +
+                             ((currentStockBucket / currentTotalPortfolio) * stockReturn);
+      averageReturnEl.innerHTML = `<b>${weightedReturn.toFixed(2)}%</b>`;
+    }
+
+    // Listen for changes in portfolio inputs
     [totalValueEl, withdrawalsEl, stockAllocationEl].forEach(el => {
       el.addEventListener('input', updateVisualization);
+    });
+
+    // Listen for changes in return inputs
+    [cashReturnEl, stockReturnEl, bondReturnEl].forEach(el => {
+      el.addEventListener('input', updateEstimatedReturn);
     });
 
     // Initial update
