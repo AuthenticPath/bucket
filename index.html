@@ -266,9 +266,9 @@
       const stockPercent = totalPortfolio > 0 ? Math.round((stockBucket / totalPortfolio) * 100) : 0;
 
       // Update bucket displays (name, amount without cents, and percentage)
-      cashValueEl.innerHTML = `<strong>Cash</strong><br>${formatCurrencyNoCents(cashBucket)}<br>${cashPercent}%`;
-      bondValueEl.innerHTML = `<strong>Bonds</strong><br>${formatCurrencyNoCents(bondBucket)}<br>${bondPercent}%`;
       stockValueEl.innerHTML = `<strong>Stocks</strong><br>${formatCurrencyNoCents(stockBucket)}<br>${stockPercent}%`;
+      bondValueEl.innerHTML = `<strong>Bonds</strong><br>${formatCurrencyNoCents(bondBucket)}<br>${bondPercent}%`;
+      cashValueEl.innerHTML = `<strong>Cash</strong><br>${formatCurrencyNoCents(cashBucket)}<br>${cashPercent}%`;
 
       // Draw the updated pie chart
       drawChart(cashBucket, bondBucket, stockBucket, totalPortfolio);
@@ -323,7 +323,7 @@
     });
 
     // Listen for changes in return inputs
-    [cashReturnEl, bondReturnEl, stockReturnEl].forEach(el => {
+    [stockReturnEl, bondReturnEl, cashReturnEl].forEach(el => {
       el.addEventListener('input', updateEstimatedReturn);
     });
 
