@@ -213,9 +213,9 @@
       const stockPercent = totalPortfolio > 0 ? Math.round((stockBucket / totalPortfolio) * 100) : 0;
 
       // Update bucket display text with name, dollar amount (no cents), and percentage
-      cashValueEl.innerHTML = `<strong>Cash</strong><br>${formatCurrencyNoCents(cashBucket)}<br>${cashPercent}%`;
-      bondValueEl.innerHTML = `<strong>Bonds</strong><br>${formatCurrencyNoCents(bondBucket)}<br>${bondPercent}%`;
-      stockValueEl.innerHTML = `<strong>Stocks</strong><br>${formatCurrencyNoCents(stockBucket)}<br>${stockPercent}%`;
+      cashValueEl.innerHTML = `<strong>Cash</strong><br>${formatCurrencyNoCents(cashBucket)}<br><strong>${cashPercent}%</strong>`;
+      bondValueEl.innerHTML = `<strong>Bonds</strong><br>${formatCurrencyNoCents(bondBucket)}<br><strong>${bondPercent}%</strong>`;
+      stockValueEl.innerHTML = `<strong>Stocks</strong><br>${formatCurrencyNoCents(stockBucket)}<br><strong>${stockPercent}%</strong>`;
 
       // Draw chart
       drawChart(cashBucket, bondBucket, stockBucket, totalPortfolio);
